@@ -37,7 +37,10 @@ void LCD_init(){
     CONTROL_PORT    |=  (1<<RS);
     
 	_delay_ms(100);	
-
+    
+    //Chip Select
+    CONTROL_PORT    &=  ~(1<<CS);
+    
 	LCD_Instruction(set_pll_mn);	
 	LCD_Write_DATA(0x0023);
 	LCD_Write_DATA(0x0002);
@@ -123,50 +126,41 @@ void LCD_init(){
     CONTROL_PORT    |=  (1<<WR);
     CONTROL_PORT    |=  (1<<RS);
     
-   }
+}
 
 void LCD_Instruction(uint8_t  command)    {  
-
+    
     //Select Command mode
     CONTROL_PORT    &=  ~(1<<RS);
     
-    //Chip Select
-    CONTROL_PORT    &=  ~(1<<CS);
     //Stop Read if exists
     CONTROL_PORT    |=  (1<<RD);
-
+    
     LCD_Write_Bus(command, COMMAND);
     
     //Write signal
     CONTROL_PORT    &=  ~(1<<WR);
     //Stop Write cycle
     CONTROL_PORT    |=  (1<<WR);
-    //Chip unselect
-    CONTROL_PORT    |=  (1<<CS);
-
+    
 }
 
 void LCD_Write_DATA(uint8_t  data)    {  
-
+    
     //Select Data mode
     CONTROL_PORT    |=  (1<<RS);
     
-    //Chip Select
-    CONTROL_PORT    &=  ~(1<<CS);
     //Stop Read if exists
     CONTROL_PORT    |=  (1<<RD);
-
+    
     LCD_Write_Bus(data, DATA);
     
     //Write signal
     CONTROL_PORT    &=  ~(1<<WR);
     CONTROL_PORT    |=  (1<<WR);
-    
-    //Chip unselect
-    CONTROL_PORT    |=  (1<<CS);
- 
-}
 
+    
+}
 
 void LCD_Write_Bus(uint16_t data, uint8_t type){
     
@@ -191,6 +185,9 @@ void LCD_Write_Bus(uint16_t data, uint8_t type){
 }
 
 void adjust_backlight(uint8_t PWM_Value){
+    
+    CONTROL_PORT    &=  ~(1<<CS);
+
     // 	if(PWM_Value==255) PWM_Value=0;
     // 	else if (PWM_Value==0) PWM_Value=255;
 	LCD_Instruction(set_pwm_conf); //set PWM for B/L
@@ -200,9 +197,16 @@ void adjust_backlight(uint8_t PWM_Value){
 	LCD_Write_DATA(0x00F0);
 	LCD_Write_DATA(0x0000);
 	LCD_Write_DATA(0x0000);
+    
+    CONTROL_PORT    |=  (1<<CS);
+
 }
 
 void LCD_Set_AREA(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y2){
+    
+    //Chip Select
+    CONTROL_PORT    &=  ~(1<<CS);
+    
     LCD_Instruction(set_column_address);
     LCD_Write_DATA(x1>>8);
     LCD_Write_DATA(0x00FF&x1); 
@@ -217,9 +221,15 @@ void LCD_Set_AREA(unsigned int x1,unsigned int y1,unsigned int x2,unsigned int y
     
     //LCD_Instruction(WriteDatatoGRAM);
     
+    CONTROL_PORT    |=  (1<<CS);
+
+    
 }
 
 void show_colour_bar(void){
+    
+    CONTROL_PORT    &=  ~(1<<CS);
+
 	unsigned int i,j;
 	LCD_Instruction(write_memory_start);
     for(i=0;i<480UL;i++){
@@ -235,16 +245,25 @@ void show_colour_bar(void){
             else LCD_Write_DATA(Black);
         }	 
     }
+    
+    CONTROL_PORT    |=  (1<<CS);
+
 }
 
 void LCD_Fill(unsigned long color){
 	unsigned int j,m;
 	unsigned long ia;
+    
+    //Chip Select
+    CONTROL_PORT    &=  ~(1<<CS);
+    
 	LCD_Instruction(write_memory_start);
     
     for(ia=0;ia<384000UL;ia++){
         LCD_Write_DATA(color);
     }
+    
+    CONTROL_PORT    |=  (1<<CS);
     
 }
 
